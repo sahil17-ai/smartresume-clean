@@ -1,0 +1,31 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from routes import resume, predict, jd_match, auth, admin
+import uvicorn
+
+app = FastAPI(title="SmartResume AI API", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(resume.router, prefix="/api/resume", tags=["resume"])
+app.include_router(predict.router, prefix="/api/predict", tags=["predict"])
+app.include_router(jd_match.router, prefix="/api/jd", tags=["jd"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+
+@app.get("/")
+def root():
+    return {"status": "SmartResume AI API running", "version": "1.0.0"}
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok"}
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
