@@ -5,6 +5,8 @@ from pydantic import BaseModel
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import hashlib, secrets, os
+from sqlalchemy.orm import Session
+from models.database import get_db, User
 
 router = APIRouter()
 
@@ -13,9 +15,6 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 security = HTTPBearer(auto_error=False)
-
-# In-memory store (replace with DB in production)
-users_store: dict = {}
 
 class RegisterRequest(BaseModel):
     name: str
@@ -53,40 +52,46 @@ def verify_token(token: str) -> str:
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     if not credentials:
         raise HTTPException(status_code=401, detail="Not authenticated")
     email = verify_token(credentials.credentials)
-    user = users_store.get(email)
+    user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
 @router.post("/register")
-def register(body: RegisterRequest):
+def register(body: RegisterRequest, db: Session = Depends(get_db)):
     if not body.name or not body.email or not body.password:
         raise HTTPException(status_code=400, detail="All fields are required")
     if len(body.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-    if body.email in users_store:
+    
+    existing_user = db.query(User).filter(User.email == body.email).first()
+    if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    users_store[body.email] = {
-        "name": body.name,
-        "email": body.email,
-        "password_hash": hash_password(body.password),
-    }
+    new_user = User(
+        name=body.name,
+        email=body.email,
+        password_hash=hash_password(body.password)
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
     token = create_token(body.email)
-    return JSONResponse({"token": token, "name": body.name, "email": body.email})
+    return JSONResponse({"token": token, "name": new_user.name, "email": new_user.email})
 
 @router.post("/login")
-def login(body: LoginRequest):
-    user = users_store.get(body.email)
-    if not user or not verify_password(body.password, user["password_hash"]):
+def login(body: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == body.email).first()
+    if not user or not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     token = create_token(body.email)
-    return JSONResponse({"token": token, "name": user["name"], "email": user["email"]})
+    return JSONResponse({"token": token, "name": user.name, "email": user.email})
 
 @router.get("/me")
-def get_me(current_user: dict = Depends(get_current_user)):
-    return {"name": current_user["name"], "email": current_user["email"]}
+def get_me(current_user: User = Depends(get_current_user)):
+    return {"name": current_user.name, "email": current_user.email, "id": current_user.id}

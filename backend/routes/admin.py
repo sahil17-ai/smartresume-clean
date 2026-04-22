@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from routes.auth import verify_token, users_store, hash_password
+from routes.auth import verify_token, hash_password, create_token
+from sqlalchemy.orm import Session
+from models.database import get_db, User, Resume
 import os
 
 router = APIRouter()
@@ -24,39 +26,48 @@ def admin_login(body: dict):
     password = body.get("password", "")
     if email != ADMIN_EMAIL or password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid admin credentials")
-    from routes.auth import create_token
     token = create_token(email)
     return {"token": token, "email": email, "role": "admin"}
 
 @router.get("/stats")
-def get_stats(admin=Depends(get_admin_user)):
+def get_stats(admin=Depends(get_admin_user), db: Session = Depends(get_db)):
+    users = db.query(User).all()
+    total_resumes = db.query(Resume).count()
     return {
-        "total_users": len(users_store),
+        "total_users": len(users),
+        "total_resumes": total_resumes,
         "users": [
             {
-                "name": u["name"],
-                "email": u["email"],
-                "resume_count": u.get("resume_count", 0),
+                "id": u.id,
+                "name": u.name,
+                "email": u.email,
+                "created_at": u.created_at,
+                "resume_count": db.query(Resume).filter(Resume.user_id == u.id).count(),
             }
-            for u in users_store.values()
+            for u in users
         ]
     }
 
 @router.delete("/users/{email}")
-def delete_user(email: str, admin=Depends(get_admin_user)):
-    if email not in users_store:
+def delete_user(email: str, admin=Depends(get_admin_user), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if email == ADMIN_EMAIL:
         raise HTTPException(status_code=400, detail="Cannot delete admin")
-    del users_store[email]
+    db.delete(user)
+    db.commit()
     return {"message": f"User {email} deleted"}
 
 @router.post("/users/{email}/reset-password")
-def reset_password(email: str, body: dict, admin=Depends(get_admin_user)):
-    if email not in users_store:
+def reset_password(email: str, body: dict, admin=Depends(get_admin_user), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
     new_password = body.get("password", "")
     if len(new_password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-    users_store[email]["password_hash"] = hash_password(new_password)
+    user.password_hash = hash_password(new_password)
+    db.commit()
     return {"message": f"Password reset for {email}"}
+

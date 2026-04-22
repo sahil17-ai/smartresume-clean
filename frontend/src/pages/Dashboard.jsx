@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
 const STAT_CARDS = [
@@ -8,10 +8,20 @@ const STAT_CARDS = [
 ];
 
 export default function Dashboard({ navigate }) {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
+  const [resumes, setResumes] = useState([]);
 
   const handleLogout = () => { logout(); navigate("landing"); };
+  
+  useEffect(() => {
+    if (token) {
+      fetch("/api/resume/", { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.ok ? r.json() : [])
+        .then(data => setResumes(Array.isArray(data) ? data : []))
+        .catch(console.error);
+    }
+  }, [token]);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", paddingTop: 80 }}>

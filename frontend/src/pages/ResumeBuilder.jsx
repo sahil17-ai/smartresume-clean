@@ -1,21 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import AIPredictor from "../components/AIPredictor";
 import JDMatcher from "../components/JDMatcher";
 import ResumePreview from "../components/ResumePreview";
 import Customizer from "../components/Customizer";
+import AISuite from "../components/AISuite";
 
 const SECTION_CONFIGS = {
   personal: {
     label: "Personal Info", icon: "◎",
     fields: [
-      { key: "name", label: "Full Name", type: "text", placeholder: "Tumcha naam" },
+      { key: "name", label: "Full Name", type: "text", placeholder: "Your full name" },
       { key: "title", label: "Professional Title", type: "text", placeholder: "Software Engineer" },
-      { key: "email", label: "Email", type: "email", placeholder: "tumcha@email.com" },
+      { key: "email", label: "Email", type: "email", placeholder: "you@example.com" },
       { key: "phone", label: "Phone", type: "tel", placeholder: "+91 98765 43210" },
       { key: "location", label: "Location", type: "text", placeholder: "Pune, Maharashtra" },
-      { key: "linkedin", label: "LinkedIn URL", type: "url", placeholder: "linkedin.com/in/tumcha-naam" },
-      { key: "github", label: "GitHub URL", type: "url", placeholder: "github.com/tumcha-naam" },
-      { key: "summary", label: "Professional Summary", type: "textarea", placeholder: "Tumchi strengths, experience aani goals ithye lihaa..." },
+      { key: "linkedin", label: "LinkedIn URL", type: "url", placeholder: "linkedin.com/in/your-name" },
+      { key: "github", label: "GitHub URL", type: "url", placeholder: "github.com/your-name" },
+      { key: "summary", label: "Professional Summary", type: "textarea", placeholder: "Write your strengths, experience, and career goals." },
     ],
   },
   education: {
@@ -31,11 +32,11 @@ const SECTION_CONFIGS = {
   experience: {
     label: "Work Experience", icon: "✦", repeatable: true, itemLabel: "Job",
     fields: [
-      { key: "company", label: "Company Name", type: "text", placeholder: "Company naam" },
+      { key: "company", label: "Company Name", type: "text", placeholder: "Company name" },
       { key: "role", label: "Job Title", type: "text", placeholder: "Software Engineer" },
       { key: "duration", label: "Duration", type: "text", placeholder: "June 2022 – Present" },
       { key: "location", label: "Location", type: "text", placeholder: "Bangalore, India" },
-      { key: "description", label: "Key Achievements (one per line)", type: "textarea", placeholder: "• API response time 40% ne reduce keli\n• Microservice built kela 10K RPM sathi" },
+      { key: "description", label: "Key Achievements (one per line)", type: "textarea", placeholder: "- Reduced API response time by 40%\n- Built a microservice handling 10K RPM" },
     ],
   },
   skills: {
@@ -52,10 +53,10 @@ const SECTION_CONFIGS = {
   projects: {
     label: "Projects", icon: "⊞", repeatable: true, itemLabel: "Project",
     fields: [
-      { key: "title", label: "Project Title", type: "text", placeholder: "Project naam" },
+      { key: "title", label: "Project Title", type: "text", placeholder: "Project name" },
       { key: "tech", label: "Technologies Used", type: "text", placeholder: "Python, React, FastAPI, PostgreSQL" },
-      { key: "link", label: "GitHub / Live Link", type: "url", placeholder: "github.com/tumcha-project" },
-      { key: "description", label: "Description & Impact", type: "textarea", placeholder: "Project kaay karto aani impact...\n• 50+ users\n• 87% accuracy" },
+      { key: "link", label: "GitHub / Live Link", type: "url", placeholder: "github.com/your-project" },
+      { key: "description", label: "Description & Impact", type: "textarea", placeholder: "What this project does and measurable impact.\n- 50+ users\n- 87% accuracy" },
     ],
   },
   certifications: {
@@ -70,17 +71,17 @@ const SECTION_CONFIGS = {
   achievements: {
     label: "Achievements", icon: "◉",
     fields: [
-      { key: "items", label: "Achievements (one per line)", type: "textarea", placeholder: "• Smart India Hackathon madhe 1st place\n• Google Developer Student Club Lead\n• LeetCode top 5% (1800+ rating)" },
+      { key: "items", label: "Achievements (one per line)", type: "textarea", placeholder: "- First place, Smart India Hackathon\n- Google Developer Student Club Lead\n- LeetCode top 5% (1800+ rating)" },
     ],
   },
   internships: {
     label: "Internships", icon: "◇", repeatable: true, itemLabel: "Internship",
     fields: [
-      { key: "company", label: "Company Name", type: "text", placeholder: "Google / Startup naam" },
+      { key: "company", label: "Company Name", type: "text", placeholder: "Google / Startup name" },
       { key: "role", label: "Internship Role", type: "text", placeholder: "Data Science Intern" },
       { key: "duration", label: "Duration", type: "text", placeholder: "May 2024 – July 2024" },
       { key: "stipend", label: "Stipend (optional)", type: "text", placeholder: "Rs. 15,000/month" },
-      { key: "description", label: "Work Done & Learnings", type: "textarea", placeholder: "• Python vaaprun data analysis keli\n• ML model deploy kela\n• 20% accuracy improvement milali" },
+      { key: "description", label: "Work Done & Learnings", type: "textarea", placeholder: "- Performed data analysis in Python\n- Deployed an ML model\n- Improved accuracy by 20%" },
     ],
   },
 };
@@ -146,12 +147,12 @@ export default function ResumeBuilder({ template, navigate, domain = "tech" }) {
     setTimeout(() => {
       const el = document.getElementById("resume-preview-print");
       if (!el) {
-        showToast("Preview load zhala nahi, parat try kara", "error");
+        showToast("Preview failed to load. Please try again.", "error");
         setExporting(false);
         return;
       }
       const name = formData?.personal?.name || "Resume";
-      // html2pdf CDN vaaprun direct PDF download
+      // Direct PDF download using html2pdf CDN
       const script = document.createElement("script");
       script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
       script.onload = () => {
@@ -164,10 +165,10 @@ export default function ResumeBuilder({ template, navigate, domain = "tech" }) {
         };
         window.html2pdf().set(opt).from(el).save().then(() => {
           setExporting(false);
-          showToast(`${name}-SmartResume.pdf download zala! ✅`);
+          showToast(`${name}-SmartResume.pdf downloaded successfully.`);
         }).catch(() => {
           setExporting(false);
-          showToast("Download failed, parat try kara", "error");
+          showToast("Download failed. Please try again.", "error");
         });
       };
       script.onerror = () => {
@@ -240,7 +241,7 @@ export default function ResumeBuilder({ template, navigate, domain = "tech" }) {
         </div>
 
         <div className="tabs" style={{ background: "var(--surface)" }}>
-          {[{ id: "edit", label: "✏ Edit" }, { id: "preview", label: "👁 Preview" }, { id: "ai", label: "◎ AI Score" }, { id: "jd", label: "⬡ JD Match" }].map((t) => (
+          {[{ id: "edit", label: "Edit" }, { id: "preview", label: "Preview" }, { id: "ai-suite", label: "AI Suite" }, { id: "ai", label: "AI Score" }, { id: "jd", label: "JD Match" }].map((t) => (
             <button key={t.id} className={`tab ${activeTab === t.id ? "active" : ""}`} onClick={() => setActiveTab(t.id)}>{t.label}</button>
           ))}
         </div>
@@ -315,7 +316,7 @@ export default function ResumeBuilder({ template, navigate, domain = "tech" }) {
                   </button>
                 </div>
               </div>
-              {/* he div PDF madhe capture hoil */}
+              {/* This div is captured for PDF export */}
               <div id="resume-preview-print">
                 <ResumePreview formData={formData} style={style} template={template} fullPage />
               </div>
@@ -326,6 +327,18 @@ export default function ResumeBuilder({ template, navigate, domain = "tech" }) {
         {activeTab === "ai" && (
           <div style={{ flex: 1, overflowY: "auto", padding: 40 }}>
             <AIPredictor formData={formData} template={template} domain={domain} />
+          </div>
+        )}
+
+        {activeTab === "ai-suite" && (
+          <div style={{ flex: 1, overflowY: "auto", padding: 40 }}>
+            <AISuite
+              formData={formData}
+              onFormDataUpdate={(newData) => {
+                setFormData(newData);
+                setActiveTab("edit");
+              }}
+            />
           </div>
         )}
 
@@ -365,7 +378,7 @@ function SectionForm({ section, config, data, onUpdate, onAdd, onRemove }) {
           <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24 }}>{config.label}</h2>
         </div>
         <p style={{ color: "var(--text3)", fontSize: 14 }}>
-          {isRepeatable ? `Multiple ${config.itemLabel?.toLowerCase()}s add karu shakta` : "Tumchi details fill kara"}
+          {isRepeatable ? `You can add multiple ${config.itemLabel?.toLowerCase()} entries.` : "Fill in your details."}
         </p>
       </div>
 
@@ -411,3 +424,4 @@ function SectionForm({ section, config, data, onUpdate, onAdd, onRemove }) {
     </div>
   );
 }
+

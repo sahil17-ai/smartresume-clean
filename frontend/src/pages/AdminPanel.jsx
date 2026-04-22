@@ -47,7 +47,7 @@ export default function AdminPanel({ navigate }) {
   }
 
   async function handleDelete(userEmail) {
-    if (!confirm(`"${userEmail}" ला delete करायचे?`)) return;
+    if (!confirm(`Delete "${userEmail}"?`)) return;
     const res = await fetch(`${API}/users/${encodeURIComponent(userEmail)}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${adminToken}` },
