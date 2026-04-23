@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-
+import API from "../config";
 const STAT_CARDS = [
   { label: "Resume Score", value: "—", icon: "◎", color: "#6c63ff", sub: "Analyze your resume to get score" },
   { label: "Grade", value: "—", icon: "✦", color: "#f59e0b", sub: "Based on AI analysis" },
@@ -13,10 +13,10 @@ export default function Dashboard({ navigate }) {
   const [resumes, setResumes] = useState([]);
 
   const handleLogout = () => { logout(); navigate("landing"); };
-  
+
   useEffect(() => {
     if (token) {
-      fetch("/api/resume/", { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${API}/api/resume/`, { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.ok ? r.json() : [])
         .then(data => setResumes(Array.isArray(data) ? data : []))
         .catch(console.error);

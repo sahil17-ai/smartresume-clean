@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import API from "../config";
 async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -28,9 +28,10 @@ function isRetryableError(error) {
 
 async function requestJSON(url, options = {}, { timeoutMs = 45000, retries = 1 } = {}) {
   let lastError;
+  const endpoint = url.startsWith("http") ? url : `${API}${url}`;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
-      const res = await fetchWithTimeout(url, options, timeoutMs);
+      const res = await fetchWithTimeout(endpoint, options, timeoutMs);
       let data = {};
       try {
         data = await res.json();

@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-
-const API = "/api/admin";
-
+import API from "../config";
 export default function AdminPanel({ navigate }) {
   const [adminToken, setAdminToken] = useState(() => localStorage.getItem("sr_admin_token"));
   const [email, setEmail] = useState("admin@smartresume.com");
@@ -20,13 +18,13 @@ export default function AdminPanel({ navigate }) {
   async function fetchStats() {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/stats`, {
+      const res = await fetch(`${API}/api/admin/stats`, {
         headers: { Authorization: `Bearer ${adminToken}` },
       });
       if (!res.ok) { setAdminToken(null); localStorage.removeItem("sr_admin_token"); return; }
       const data = await res.json();
       setStats(data);
-    } catch {}
+    } catch { }
     setLoading(false);
   }
 
@@ -34,7 +32,7 @@ export default function AdminPanel({ navigate }) {
     e.preventDefault();
     setLoginError("");
     try {
-      const res = await fetch(`${API}/login`, {
+      const res = await fetch(`${API}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -48,7 +46,7 @@ export default function AdminPanel({ navigate }) {
 
   async function handleDelete(userEmail) {
     if (!confirm(`Delete "${userEmail}"?`)) return;
-    const res = await fetch(`${API}/users/${encodeURIComponent(userEmail)}`, {
+    const res = await fetch(`${API}/api/admin/users/${encodeURIComponent(userEmail)}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${adminToken}` },
     });
@@ -59,7 +57,7 @@ export default function AdminPanel({ navigate }) {
 
   async function handleResetPassword(e) {
     e.preventDefault();
-    const res = await fetch(`${API}/users/${encodeURIComponent(resetTarget)}/reset-password`, {
+    const res = await fetch(`${API}/api/admin/users/${encodeURIComponent(resetTarget)}/reset-password`, {
       method: "POST",
       headers: { Authorization: `Bearer ${adminToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({ password: newPass }),

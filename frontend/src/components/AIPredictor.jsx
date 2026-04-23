@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import API from "../config";
 const SKILL_KEYWORDS = {
   high_demand: ["python", "react", "node", "docker", "kubernetes", "aws", "tensorflow", "pytorch", "sql", "postgresql", "mongodb", "redis", "golang", "typescript", "graphql", "fastapi"],
   medium_demand: ["javascript", "java", "c++", "django", "flask", "mysql", "git", "linux", "rest api", "microservices"],
@@ -89,7 +89,7 @@ export default function AIPredictor({ formData, template, domain = "tech" }) {
     }, 600);
 
     try {
-      const res = await fetch("/api/predict/score", {
+      const res = await fetch(`${API}/api/predict/score`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ form_data: { ...formData, domain } }),
@@ -166,11 +166,13 @@ export default function AIPredictor({ formData, template, domain = "tech" }) {
           <p style={{ color: "var(--text2)", fontSize: 14, marginBottom: 20 }}>Our ML model is scoring your profile across 6 dimensions</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 300, margin: "0 auto" }}>
             {LOADING_STEPS.map((t, i) => (
-              <div key={i} style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 10,
+              <div key={i} style={{
+                fontSize: 13, display: "flex", alignItems: "center", gap: 10,
                 color: i <= loadingStep ? "var(--text)" : "var(--text3)",
                 transition: "color 0.3s",
               }}>
-                <div style={{ width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                <div style={{
+                  width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
                   background: i < loadingStep ? "var(--green)" : i === loadingStep ? "var(--accent)" : "var(--surface2)",
                   display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10,
                   transition: "background 0.3s",
@@ -246,8 +248,8 @@ export default function AIPredictor({ formData, template, domain = "tech" }) {
                 {result.interpretation || (result.overall >= 75
                   ? "Your resume is strong! A few targeted improvements could push you into the top 10% of applicants."
                   : result.overall >= 55
-                  ? "You have a solid foundation. Focus on the high-priority suggestions below."
-                  : "Your resume needs work in key areas. Follow the AI suggestions below.")}
+                    ? "You have a solid foundation. Focus on the high-priority suggestions below."
+                    : "Your resume needs work in key areas. Follow the AI suggestions below.")}
               </p>
               <button className="btn btn-primary" onClick={analyze} style={{ fontSize: 13 }}>
                 Re-analyze

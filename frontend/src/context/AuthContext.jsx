@@ -1,12 +1,19 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import API from "../config";
 
 const AuthContext = createContext(null);
-
-// Safe JSON parser — never throws on empty/non-JSON body
+const API = "https://smartresume-clean-production.up.railway.app";
 async function safeJson(res) {
   const text = await res.text();
   if (!text || !text.trim()) return {};
-  try { return JSON.parse(text); } catch { return { detail: text }; }
+  try {
+    return JSON.parse(text);
+  } catch {
+    if (res.status === 404) {
+      return { detail: "API route not found (404). Please ensure the backend is running and the URL is correct." };
+    }
+    return { detail: text.length > 300 ? `Server Error (${res.status})` : text };
+  }
 }
 
 export function AuthProvider({ children }) {
@@ -16,7 +23,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (token) {
-      fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.ok ? safeJson(r) : null)
         .then(u => { setUser(u || null); setLoading(false); })
         .catch(() => { setToken(null); localStorage.removeItem("sr_token"); setLoading(false); });
@@ -26,7 +33,7 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   const login = async (email, password) => {
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch(`${API}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -40,7 +47,7 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (name, email, password) => {
-    const res = await fetch("/api/auth/register", {
+    const res = await fetch(`${API}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),

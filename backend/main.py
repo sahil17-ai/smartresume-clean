@@ -4,6 +4,7 @@ from routes import resume, predict, jd_match, auth, admin
 from routes import ai_tools, parser as pdf_parser
 import uvicorn
 from dotenv import load_dotenv
+import os
 load_dotenv()
 
 from models.database import create_tables
@@ -15,9 +16,16 @@ def on_startup():
     create_tables()
 
 
+DEFAULT_ORIGINS = [
+    "http://localhost:5173",
+    "https://smartresume-clean.vercel.app",
+]
+EXTRA_ORIGINS = [o.strip().rstrip("/") for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
+ALLOWED_ORIGINS = list(dict.fromkeys(DEFAULT_ORIGINS + EXTRA_ORIGINS))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
